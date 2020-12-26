@@ -58,7 +58,7 @@ public class KafkaPrometheusExporter {
             .labelNames("consumergroup", "topic", "partition").create().register();
     private Gauge consumerGroupStateGauge = Gauge.build().name("kafka_consumergroup_state").labelNames("consumergroup").create().register();
     private Gauge consumerGroupMembersGauge = Gauge.build().name("kafka_consumergroup_members")
-            .labelNames("consumergroup", "topic", "partition").create().register();
+            .labelNames("consumergroup").create().register();
     // private Gauge consumerGroupActiveGauge =
     // Gauge.build().name("kafka_consumergroup_active").labelNames("topic",
     // "partition").create().register();
