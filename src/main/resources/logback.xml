@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+	<appender class="ch.qos.logback.core.ConsoleAppender" name="STDOUT">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+      </pattern>
+    </encoder>
+  </appender>
+	<appender name="ASYNC-GELF"
+		class="ch.qos.logback.classic.AsyncAppender">
+		<queueSize>1000</queueSize>
+		<discardingThreshold>0</discardingThreshold>
+		<appender-ref ref="STDOUT" />
+	</appender>
+	<root level="${LOG_LEVEL:-INFO}">
+		<appender-ref ref="ASYNC-GELF" />
+	</root>
+</configuration>

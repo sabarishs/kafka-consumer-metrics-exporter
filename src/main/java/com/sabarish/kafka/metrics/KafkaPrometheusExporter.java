@@ -1,5 +1,6 @@
 package com.sabarish.kafka.metrics;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.prometheus.client.Gauge;
+import io.prometheus.client.exporter.HTTPServer;
 
 /**
  * 
@@ -53,11 +55,15 @@ public class KafkaPrometheusExporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaPrometheusExporter.class);
 
     private Gauge consumerGroupLagGauge = Gauge.build().name("kafka_consumergroup_lag").labelNames("consumergroup", "topic", "partition")
+        .help("Consumer lag")
             .create().register();
     private Gauge consumerGroupOffsetsGauge = Gauge.build().name("kafka_consumergroup_current_offset")
+        .help("Current consumer group offsets")
             .labelNames("consumergroup", "topic", "partition").create().register();
-    private Gauge consumerGroupStateGauge = Gauge.build().name("kafka_consumergroup_state").labelNames("consumergroup").create().register();
+    private Gauge consumerGroupStateGauge = Gauge.build().name("kafka_consumergroup_state").labelNames("consumergroup")
+        .help("State of consumer group").create().register();
     private Gauge consumerGroupMembersGauge = Gauge.build().name("kafka_consumergroup_members")
+          .help("Number of active members in consumer group")
             .labelNames("consumergroup").create().register();
     // private Gauge consumerGroupActiveGauge =
     // Gauge.build().name("kafka_consumergroup_active").labelNames("topic",
@@ -69,12 +75,19 @@ public class KafkaPrometheusExporter {
     // Gauge.build().name("kafka_topic_partition_current_offset").labelNames("topic",
     // "partition").create().register();
     private Gauge topicUnderReplicatedPartitionsGauge = Gauge.build().name("kafka_topic_partition_under_replicated")
-            .labelNames("topic", "partition").create().register();
-    private Gauge topicNoLeaderGauge = Gauge.build().name("kafka_topic_partition_no_leader").labelNames("topic", "partition").create()
-            .register();
-    private Gauge topicImbalanceGauge = Gauge.build().name("kafka_topic_leader_imbalance").labelNames("topic").create().register();
+        .help("under replicated partitions")    
+        .labelNames("topic", "partition").create().register();
+    private Gauge topicNoLeaderGauge = Gauge.build().name("kafka_topic_partition_no_leader").labelNames("topic", "partition")
+        .help("partitions leadership status").create()
+        .register();
+    private Gauge topicImbalanceGauge = Gauge.build().name("kafka_topic_leader_imbalance").labelNames("topic")
+        .help("topic level imbalance").create().register();
 
-    public void collect() {
+    public void collect() throws IOException {
+      LOGGER.info("Started");
+      int metricsPort = Integer
+          .valueOf(StringUtils.isEmpty(System.getenv("prometheus_metrics_port")) ? "9100" : System.getenv("prometheus_metrics_port"));
+      HTTPServer metricsServer = new HTTPServer(metricsPort);
         String hostNameRegex = System.getenv("host_name_regex");
         boolean execute = true;
         if (StringUtils.isNotEmpty(hostNameRegex)) {
@@ -347,6 +360,8 @@ public class KafkaPrometheusExporter {
         props.setProperty(AdminClientConfig.RETRIES_CONFIG, StringUtils.isEmpty(System.getenv("retries")) ? "3" : System.getenv("retries"));
         props.setProperty(AdminClientConfig.SECURITY_PROTOCOL_CONFIG,
                 StringUtils.isEmpty(System.getenv("protocol")) ? AdminClientConfig.DEFAULT_SECURITY_PROTOCOL : System.getenv("protocol"));
+        props.put("key.deserializer","org.apache.kafka.common.serialization.StringDeserializer");  
+        props.put("value.deserializer","org.apache.kafka.common.serialization.StringDeserializer");
         return props;
     }
 
@@ -361,6 +376,16 @@ public class KafkaPrometheusExporter {
             }
         }
         return topicsToIgnorePerCg;
+    }
+    
+    public static void main(String[] args) {
+      KafkaPrometheusExporter exporter = new KafkaPrometheusExporter();
+      try {
+        exporter.collect();
+      }
+      catch (Exception e) {
+        LOGGER.info("Exception when collecting metrics", e);
+      }
     }
 
 }

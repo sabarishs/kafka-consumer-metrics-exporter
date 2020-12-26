@@ -12,6 +12,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<kafka.version>2.3.0</kafka.version>
 		<slf4j.version>1.7.25</slf4j.version>
+		<logback.version>1.2.3</logback.version>
 		<junit.version>5.5.2</junit.version>
 		<prometheus.client.version>0.6.0</prometheus.client.version>
 	</properties>
@@ -21,6 +22,16 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
+		<dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
+    </dependency>
+    <dependency> 
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.3</version>
+    </dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
