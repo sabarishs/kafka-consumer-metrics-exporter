@@ -1,7 +1,26 @@
 # kafka-consumer-metrics-exporter
 
-This is a simple humble exporter for Kafka consumer group and topic metrics. It aims to help **optimize the load on kafka** when performing this kind of metrics collection. For ex, you can specify a different refresh interval for low priority consumer groups. Another example is that discovery of consumer groups by listing all of them does not need to be performed every time, it is controllable with another refresh interval. And another feature different from other exporters is that you can configure to exclude certain topics being reported for certain consumer groups. If you have been disappointed with lack of --delete-offsets in your version of Kafka, then you would understand why you need this feature.
+This is a simple humble exporter for Kafka consumer group and topic metrics. It connects to kafka and gathers the metrics for the different consumer groups and also includes a few key topic metrics related like under replicated partitions and leadership imbalance. It aims to help **optimize the load on kafka** when performing this kind of metrics collection. For ex, you can specify a different refresh interval for low priority consumer groups. Another example is that discovery of consumer groups by listing all of them does not need to be performed every time, it is controllable with another refresh interval. And another feature different from other exporters is that you can configure to exclude certain topics being reported for certain consumer groups. If you have been disappointed with lack of --delete-offsets in your version of Kafka, then you would understand why you need this feature.
 
+# Metrics
+- kafka_consumergroup_lag ("consumergroup", "topic", "partition")
+  - Current lag for consumer groups
+- kafka_consumergroup_current_offset ("consumergroup", "topic", "partition")
+  - Current offset of consumer groups
+- kafka_consumergroup_state ("consumergroup")
+  - Current consumer group state encoded as the value (STABLE=1, PREPARING_REBALANCE=3, COMPLETING_REBALANCE=2, DEAD=4, EMPTY=5)
+- kafka_consumergroup_members ("consumergroup", "topic", "partition")
+  - Number of members in a consumer group
+  - Use this to know if you have enough parallelism as you have configured
+- kafka_topic_partition_under_replicated ("topic", "partition")
+  - if number of in sync replicas is less than configured
+- kafka_topic_partition_no_leader ("topic", "partition")
+  - whether each partition has a leader or not
+  - value is 0 if leader exists else 1
+- kafka_topic_leader_imbalance ("topic")
+  - 0 or 1 depending on if topic has an imbalance in leader to partition distribution or not
+
+# Levers
 Levers, levers, a lot many levers. We all love our switches, don't we? The following env vars are supported. If you hate env, jump to later part of the document.
 
 - host_name_regex: specify a host name pattern. The exporter will collect metrics only if the host name in which it is running matches this regex. So you can collect metrics in only one kafka pod (or may be 2) but not in all your pods as it is a waste of compute and strain on kafka if we collect all metrics in all pods. If undefined in env, then exporter collects in all pods
